@@ -934,12 +934,20 @@ SiftRouting::Receive (Ptr<Packet> p,
       drd = sqrt (pow ((currentX - destXLoc),2) +
                   pow ((currentY - destYLoc),2));
       trd = drd/c;
+      DGGFdelayTimer = DGGFdelayTimer*2;
+      std::cout << "\n 2Tmax=" << DGGFdelayTimer << "\n";
       DGGFdelayTimer += ((double)(trd-trp-tpd));
+      // Multiply by a scaling factor
+      DGGFdelayTimer = DGGFdelayTimer*100;
 
       /// calculate the delay time here
       /// The default time is in Second
-      Time delay = Seconds (delayTimer);
-
+      //            Use DGGFdelayTimer or delayTimer
+      Time delay = Seconds (DGGFdelayTimer);
+      std::cout << "\n trp:" << trp << " tpd:" << tpd 
+                << "\n trd:" << trd << " SiftDelayTimer+trd-trp-tpd"
+                << "\n SiftDelayTimer: " << delayTimer 
+                << "\n DGGFdelayTimer: " << DGGFdelayTimer << "\n";
       NS_LOG_DEBUG (" SIFT routing calculation"
                     << "\n\t destYLoc= "  << destYLoc
                     << ", SourceYLoc: " << sourceYLoc
