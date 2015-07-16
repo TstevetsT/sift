@@ -39,6 +39,7 @@
 #define TTL 64
 #define ALPHA 0.01
 #define TRANSMISSION_TIME 0.000047
+#define DGGFTxMaxRgTime 0.00000083391
 
 #include <list>
 #include <ctime>
@@ -760,8 +761,9 @@ SiftRouting::Receive (Ptr<Packet> p,
       siftHeader.SetLastSourceXLoc (GetObject<Node> ()->GetObject<MobilityModel> ()->GetPosition ().x);
       siftHeader.SetLastSourceYLoc (GetObject<Node> ()->GetObject<MobilityModel> ()->GetPosition ().y);
       siftHeader.SetDestAddress (destAddress);
+//  DGGF Update Header ??
       siftHeader.SetDestXLoc (destXLoc);
-      siftHeader.SetDestYLoc (destYLoc);                                // New code
+      siftHeader.SetDestYLoc (destYLoc);                 // New code
       siftHeader.SetHeaderSeqNo (headerSeqNo);
       siftHeader.SetHeaderTTL (headerTTL - 1);
       packet->AddHeader (siftHeader);
@@ -813,6 +815,8 @@ SiftRouting::Receive (Ptr<Packet> p,
       // calculation of dist.
       double currentX = siftHeader.GetLastSourceXLoc ();
       double currentY = siftHeader.GetLastSourceYLoc ();
+// DGGF Code
+      destYLoc = siftHeader.Get
       double slope = 0; // slope= (destYLoc-sourceYLoc)/(destXLoc-sourceXLoc); //y=mx+b
       double Y = (destYLoc - sourceYLoc);
       double X = (destXLoc - sourceXLoc);
@@ -822,7 +826,17 @@ SiftRouting::Receive (Ptr<Packet> p,
       double xIntersect = 0.0;
       double yIntersect = 0.0;
       double delayTimer = (double)TRANSMISSION_TIME;
+      // DGGF Specific Declarations
+      double DGGFdelayTimer = (double) DGGFTxMaxRgTime;
+      double c = 299792458;
+      double dpd = 0.0;
+      double tpd = 0.0;
+      double drp = 0.0;
+      double trp = 0.0;
+      double drd = 0.0;
+      double trd = 0.0;
 
+      //  Sift Calculations
       if (Y == 0)
         {
           slope = 0;
@@ -893,7 +907,7 @@ SiftRouting::Receive (Ptr<Packet> p,
               Simulator::Stop ();
             }
 
-        }
+        }    // End of Sift Calculations
       /// calculate the delay for each packet and pass it in
       /// as a time value, ns3 has one class called *Time*
       /// if the timer expires, we will forward the packet
@@ -904,13 +918,25 @@ SiftRouting::Receive (Ptr<Packet> p,
         }
       try
         {
-          delayTimer += ALPHA * ((double)(dTrajectory / dLastSource));
+            delayTimer += ALPHA * ((double)(dTrajectory / dLastSource));
         }
       catch (int e)
         {
           std::cout << "\n\n Unable to calculate delay. dTrajectory=" << dTrajectory << " dLastSource= " << dLastSource << "\n";
           Simulator::Stop ();
         }
+
+      //  DGGF Algorithm Implementation 
+      drp = sqrt (pow ((lastsourceXLoc - currentX),2) +
+                  pow ((lastsourceYLoc - currentY),2));
+      trp = drp/c;
+      dpd = sqrt (pow ((lastsourceXLoc - destXLoc),2) +
+                  pow ((lastsourceYLoc - destYLoc),2));
+      tpd = dpd/c;
+      drd = sqrt (pow ((currentXLoc - destXLoc),2) +
+                  pow ((currentYLoc - destYLoc),2));
+      trd = drd/c;
+      DGGFdelayTimer += ((double)(trd-trp-tpd));
 
       /// calculate the delay time here
       /// The default time is in Second
@@ -928,6 +954,8 @@ SiftRouting::Receive (Ptr<Packet> p,
                     << "\n\t Y= (destYLoc-sourceYLoc)= "         << Y
                     << ", X= (destXLoc-sourceXLoc)= "         << X
                     << "\n\t Delay: " << delay
+                    << "\n\t SIFTdelay: " << delayTimer
+                    << "\n\t DGGFdelay: " << DGGFdelayTimer
                     << "\n\t Current time: " << Seconds (Simulator::Now ()));
 
 
