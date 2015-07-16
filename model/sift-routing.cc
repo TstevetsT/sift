@@ -815,8 +815,6 @@ SiftRouting::Receive (Ptr<Packet> p,
       // calculation of dist.
       double currentX = siftHeader.GetLastSourceXLoc ();
       double currentY = siftHeader.GetLastSourceYLoc ();
-// DGGF Code
-      destYLoc = siftHeader.Get
       double slope = 0; // slope= (destYLoc-sourceYLoc)/(destXLoc-sourceXLoc); //y=mx+b
       double Y = (destYLoc - sourceYLoc);
       double X = (destXLoc - sourceXLoc);
@@ -933,8 +931,8 @@ SiftRouting::Receive (Ptr<Packet> p,
       dpd = sqrt (pow ((lastsourceXLoc - destXLoc),2) +
                   pow ((lastsourceYLoc - destYLoc),2));
       tpd = dpd/c;
-      drd = sqrt (pow ((currentXLoc - destXLoc),2) +
-                  pow ((currentYLoc - destYLoc),2));
+      drd = sqrt (pow ((currentX - destXLoc),2) +
+                  pow ((currentY - destYLoc),2));
       trd = drd/c;
       DGGFdelayTimer += ((double)(trd-trp-tpd));
 
