@@ -815,15 +815,15 @@ SiftRouting::Receive (Ptr<Packet> p,
       // calculation of dist.
       double currentX = siftHeader.GetLastSourceXLoc ();
       double currentY = siftHeader.GetLastSourceYLoc ();
-      double slope = 0; // slope= (destYLoc-sourceYLoc)/(destXLoc-sourceXLoc); //y=mx+b
-      double Y = (destYLoc - sourceYLoc);
-      double X = (destXLoc - sourceXLoc);
-      double dTrajectory = 0.0; // Distance of the current node from the trajectory
-      double dLastSource = 0.0; // Distance of the current node from the last sender
-      double b = 0.0;
-      double xIntersect = 0.0;
-      double yIntersect = 0.0;
-      double delayTimer = (double)TRANSMISSION_TIME;
+ //     double slope = 0; // slope= (destYLoc-sourceYLoc)/(destXLoc-sourceXLoc); //y=mx+b
+ //     double Y = (destYLoc - sourceYLoc);
+ //     double X = (destXLoc - sourceXLoc);
+ //     double dTrajectory = 0.0; // Distance of the current node from the trajectory
+ //     double dLastSource = 0.0; // Distance of the current node from the last sender
+ //     double b = 0.0;
+ //     double xIntersect = 0.0;
+ //     double yIntersect = 0.0;
+ //     double delayTimer = (double)TRANSMISSION_TIME;
       // DGGF Specific Declarations
       double DGGFdelayTimer = (double) DGGFTxMaxRgTime;
       double c = 299792458;
@@ -833,7 +833,28 @@ SiftRouting::Receive (Ptr<Packet> p,
       double trp = 0.0;
       double drd = 0.0;
       double trd = 0.0;
+      //  DGGF Algorithm Implementation 
+      drp = sqrt (pow ((lastsourceXLoc - currentX),2) +
+                  pow ((lastsourceYLoc - currentY),2));
+      trp = drp/c;
+      dpd = sqrt (pow ((lastsourceXLoc - destXLoc),2) +
+                  pow ((lastsourceYLoc - destYLoc),2));
+      tpd = dpd/c;
+      drd = sqrt (pow ((currentX - destXLoc),2) +
+                  pow ((currentY - destYLoc),2));
+      trd = drd/c;
+      DGGFdelayTimer = DGGFdelayTimer*2;
+      DGGFdelayTimer += ((double)(trd-trp-tpd));
+      // Multiply by a scaling factor
+      DGGFdelayTimer = DGGFdelayTimer*100;
 
+      /// calculate the delay time here
+      /// The default time is in Second
+      //            Use DGGFdelayTimer 
+      Time delay = Seconds (DGGFdelayTimer);
+      std::cout << "DGGFdelayTimer: " << DGGFdelayTimer
+                << "\t\t Current time: " << Simulator::Now () << "\n";
+/*
       //  Sift Calculations
       if (Y == 0)
         {
@@ -924,30 +945,8 @@ SiftRouting::Receive (Ptr<Packet> p,
           Simulator::Stop ();
         }
 
-      //  DGGF Algorithm Implementation 
-      drp = sqrt (pow ((lastsourceXLoc - currentX),2) +
-                  pow ((lastsourceYLoc - currentY),2));
-      trp = drp/c;
-      dpd = sqrt (pow ((lastsourceXLoc - destXLoc),2) +
-                  pow ((lastsourceYLoc - destYLoc),2));
-      tpd = dpd/c;
-      drd = sqrt (pow ((currentX - destXLoc),2) +
-                  pow ((currentY - destYLoc),2));
-      trd = drd/c;
-      DGGFdelayTimer = DGGFdelayTimer*2;
-      std::cout << "\n 2Tmax=" << DGGFdelayTimer << "\n";
-      DGGFdelayTimer += ((double)(trd-trp-tpd));
-      // Multiply by a scaling factor
-      DGGFdelayTimer = DGGFdelayTimer*100;
 
-      /// calculate the delay time here
-      /// The default time is in Second
-      //            Use DGGFdelayTimer or delayTimer
-      Time delay = Seconds (DGGFdelayTimer);
-      std::cout << "\n trp:" << trp << " tpd:" << tpd 
-                << "\n trd:" << trd << " SiftDelayTimer+trd-trp-tpd"
-                << "\n SiftDelayTimer: " << delayTimer 
-                << "\n DGGFdelayTimer: " << DGGFdelayTimer << "\n";
+
       NS_LOG_DEBUG (" SIFT routing calculation"
                     << "\n\t destYLoc= "  << destYLoc
                     << ", SourceYLoc: " << sourceYLoc
@@ -962,9 +961,9 @@ SiftRouting::Receive (Ptr<Packet> p,
                     << "\n\t Delay: " << delay
                     << "\n\t SIFTdelay: " << delayTimer
                     << "\n\t DGGFdelay: " << DGGFdelayTimer
-                    << "\n\t Current time: " << Seconds (Simulator::Now ()));
+                    << "Current time: " << Simulator::Now ();
 
-
+*/
 
       //*** Changed p to packet in the below command
       ScheduleTimer (packet, delay, sourceAddress, protocol);
