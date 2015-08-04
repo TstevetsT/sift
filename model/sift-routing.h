@@ -98,6 +98,7 @@ public:
   /**
    * \brief Constructor.
    */
+
   SiftRouting ();
   /**
    * \brief Destructor.
